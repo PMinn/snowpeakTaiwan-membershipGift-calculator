@@ -49,8 +49,13 @@ export default function Home() {
     return Math.round(price * cards[level].rewards);
   }
 
+  function pointToPrice(level, point) {
+    if (point < 0) return { min: 0, max: 0 };
+    else return { min: Math.floor((point - 0.5) / cards[level].rewards), max: Math.floor((point + 0.499999) / cards[level].rewards) };
+  }
+
   function calculate() {
-    console.log(priceToPoint(0, 180))
+    console.log(pointToPrice(0, 3))
   }
 
   return (
