@@ -40,6 +40,12 @@ export default function MyApp({ Component, pageProps }) {
           <meta name="msapplication-config" content="/favicon/browserconfig.xml" />
           <meta name="theme-color" content="#ffffff" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
+          {
+            theme.includes('dark') ?
+              <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+              :
+              <meta name="apple-mobile-web-app-status-bar-style" content="white" />
+          }
         </Head>
         <div className={theme + ' min-h-[100vh]'}>
           <Component {...pageProps}></Component>
