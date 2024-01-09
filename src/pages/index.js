@@ -277,7 +277,7 @@ export default function Home() {
                       resultSteps.map((step, index) => (
                         <TableRow key={'step_' + index}>
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell className="flex flex-col items-center justify-center min-w-[100px]">{step.action}</TableCell>
+                          <TableCell className="flex flex-col items-center justify-center min-w-[120px] text-center">{step.action}</TableCell>
                           <TableCell className="text-center">{numberComma(step.points)}</TableCell>
                           <TableCell className="text-center">{numberComma(step.totalPoints)}</TableCell>
                           <TableCell className="text-center">{numberComma(step.price)}</TableCell>
