@@ -172,7 +172,7 @@ export default function Home() {
           </NavbarItem>
         </NavbarContent>
       </Navbar>
-      <main className="flex flex-col items-center justify-center w-[90%] max-w-[450px] mx-auto py-10">
+      <main className="flex flex-col items-center justify-center w-[90%] max-w-[450px] mx-auto pt-5 pb-10">
         <RadioGroup label="會員卡等級" className="w-full mb-5" value={cardLevel} onValueChange={setCardLevel}>
           {
             cards.map((card, index) => (
