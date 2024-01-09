@@ -1,10 +1,14 @@
-import { Card, CardHeader, CardBody, CardFooter, Divider, RadioGroup, Radio, cn, Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Link, Button, Input } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, RadioGroup, Radio, cn, Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Link, Button, Input } from "@nextui-org/react";
 import { useSystem } from '@/contexts/System.js';
 import { SunIcon } from "@/icons/SunIcon";
 import { MoonIcon } from "@/icons/MoonIcon";
+import { useState } from 'react';
 
 export default function Home() {
   const { theme, setTheme } = useSystem();
+  const [cardLevel, setCardLevel] = useState("cards_0");
+  const [resultSteps, setResultSteps] = useState([]);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const cards = [
     {
@@ -56,7 +60,86 @@ export default function Home() {
   }
 
   function calculate() {
-    console.log(pointToPrice(0, 3))
+    const levelUpInput = document.getElementById('levelUp');
+    const pointsInput = document.getElementById('points');
+    const giftPointsInput = document.getElementById('giftPoints');
+    var hadLevelUp = false; // 有沒有升等過
+    var levelUp = parseInt(levelUpInput.value); // 升等的金額
+    var level = parseInt(cardLevel.replace('cards_', '')); // 目前等級
+    var points = parseInt(pointsInput.value); // 已有點數
+    var requirePoints = parseInt(giftPointsInput.value) - points; // 禮點
+
+    var result = { min: 0, max: 0, points };
+    var steps = [{
+      action: '初始',
+      price: '0',
+      totalPrice: '0',
+      points: '0',
+      totalPoints: points,
+    }];
+
+    for (let i = level; i < cards.length; i++) {
+      let levelUpPoints;
+      if (!hadLevelUp) levelUpPoints = priceToPoint(i, levelUp);
+      else levelUpPoints = priceToPoint(i, cards[i].levelUp);
+      if (requirePoints >= levelUpPoints) { //會先升等
+        result.points += levelUpPoints;
+        if (!hadLevelUp) {
+          result.max += levelUp;
+          result.min += levelUp;
+          steps.push({
+            action: (
+              <>
+                <img src={cards[i].image} className="me-5 w-[50px]" />
+                消費 [ {cards[i].name} {cards[i].rewards*100}% ]
+              </>
+            ),
+            price: levelUp,
+            totalPrice: (result.min == result.max ? result.min : `${result.min} ~ ${result.max}`),
+            points: levelUpPoints,
+            totalPoints: result.points,
+          });
+        } else {
+          result.max += cards[i].levelUp;
+          result.min += cards[i].levelUp;
+          steps.push({
+            action: (
+              <>
+                <img src={cards[i].image} className="me-5 w-[50px]" />
+                消費 [ {cards[i].name} {cards[i].rewards*100}% ]
+              </>
+            ),
+            price: cards[i].levelUp,
+            totalPrice: (result.min == result.max ? result.min : `${result.min} ~ ${result.max}`),
+            points: levelUpPoints,
+            totalPoints: result.points,
+          });
+        }
+        requirePoints -= levelUpPoints;
+        hadLevelUp = true;
+      } else {
+        let tempPrice = pointToPrice(i, requirePoints);
+        result.points += requirePoints;
+        result.max += tempPrice.max;
+        result.min += tempPrice.min;
+        steps.push({
+          action: (
+            <>
+              <img src={cards[i].image} className="me-5 w-[50px]" />
+              消費 [ {cards[i].name} {cards[i].rewards*100}% ]
+            </>
+          ),
+          price: `${tempPrice.min} ~ ${tempPrice.max}`,
+          totalPrice: (result.min == result.max ? result.min : `${result.min} ~ ${result.max}`),
+          points: requirePoints,
+          totalPoints: result.points,
+        });
+        break;
+      }
+    }
+    console.log(result, steps)
+    setResultSteps(steps);
+    onOpen();
   }
 
   return (
@@ -84,12 +167,12 @@ export default function Home() {
         </NavbarContent>
       </Navbar>
       <main className="flex flex-col items-center justify-center w-[90%] max-w-[450px] mx-auto py-10">
-        <RadioGroup label="會員卡等級" defaultValue='card_0' className="w-full mb-5">
+        <RadioGroup label="會員卡等級" className="w-full mb-5" value={cardLevel} onValueChange={setCardLevel}>
           {
             cards.map((card, index) => (
               <Radio
                 key={'Radio_' + index}
-                value={'card_' + index}
+                value={'cards_' + index}
                 classNames={{
                   base: cn(
                     "flex m-0 bg-content1 hover:bg-content2 items-center justify-between",
@@ -114,9 +197,13 @@ export default function Home() {
             </div>
           }
           type="number"
+          pattern="\d*"
           label="差多少金額升等"
+          id="levelUp"
           labelPlacement="outside"
           placeholder=" "
+          min="1"
+          step="1"
         />
         <Input
           className="mb-5"
@@ -126,9 +213,13 @@ export default function Home() {
             </div>
           }
           type="number"
+          pattern="\d*"
           label="會員點數"
+          id="points"
           labelPlacement="outside"
           placeholder=" "
+          min="1"
+          step="1"
         />
         <Input
           className="mb-5"
@@ -138,14 +229,61 @@ export default function Home() {
             </div>
           }
           type="number"
+          pattern="\d*"
           label="兌換的會員禮點數"
+          id="giftPoints"
           labelPlacement="outside"
           placeholder=" "
+          min="1"
+          step="1"
         />
-        <Button className="w-full" color="primary" onClick={calculate}>
-          計算
-        </Button>
+        <div className="flex justify-between w-full">
+          <div className="w-[49%]">
+            <Button className="w-full block" color="default" onClick={() => { }}>清除</Button>
+          </div>
+          <div className="w-[49%]">
+            <Button className="w-full block" color="primary" onClick={calculate}>計算</Button>
+          </div>
+        </div>
       </main >
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} className={theme} size="5xl" >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">計算結果</ModalHeader>
+              <ModalBody>
+                <Table aria-label="Example static collection table">
+                  <TableHeader>
+                    <TableColumn> </TableColumn>
+                    <TableColumn>消費金額</TableColumn>
+                    <TableColumn>累積金額</TableColumn>
+                    <TableColumn>新增點數</TableColumn>
+                    <TableColumn>累積點數</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {
+                      resultSteps &&
+                      resultSteps.map((step, index) => (
+                        <TableRow key={'step_' + index}>
+                          <TableCell className="flex items-center">{step.action}</TableCell>
+                          <TableCell>{step.price}</TableCell>
+                          <TableCell>{step.totalPrice}</TableCell>
+                          <TableCell>{step.points}</TableCell>
+                          <TableCell>{step.totalPoints}</TableCell>
+                        </TableRow>
+                      ))
+                    }
+                  </TableBody>
+                </Table>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>Close</Button>
+                <Button color="primary" onPress={onClose}>Action</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </>
   )
 }
