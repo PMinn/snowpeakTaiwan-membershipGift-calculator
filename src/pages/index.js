@@ -51,6 +51,7 @@ export default function Home() {
 
   function pointToPrice(level, point) {
     if (point < 0) return { min: 0, max: 0 };
+    else if (point == 0) return { min: 0, max: Math.floor((point + 0.499999) / cards[level].rewards) };
     else return { min: Math.floor((point - 0.5) / cards[level].rewards), max: Math.floor((point + 0.499999) / cards[level].rewards) };
   }
 
@@ -82,7 +83,7 @@ export default function Home() {
           </NavbarItem>
         </NavbarContent>
       </Navbar>
-      <main className="flex flex-col items-center justify-center w-[90%] max-w-[450px] mx-auto">
+      <main className="flex flex-col items-center justify-center w-[90%] max-w-[450px] mx-auto py-10">
         <RadioGroup label="會員卡等級" defaultValue='card_0' className="w-full mb-5">
           {
             cards.map((card, index) => (
