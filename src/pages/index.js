@@ -83,9 +83,9 @@ export default function Home() {
 
     for (let i = level; i < cards.length; i++) {
       let levelUpPoints;
-      if (!hadLevelUp) levelUpPoints = priceToPoint(i, levelUp);
+      if (!hadLevelUp && i < cards.length - 1) levelUpPoints = priceToPoint(i, levelUp);
       else levelUpPoints = priceToPoint(i, cards[i].levelUp);
-      if (requirePoints >= levelUpPoints) { //會先升等
+      if (requirePoints >= levelUpPoints) { // 會先升等
         result.points += levelUpPoints;
         if (!hadLevelUp) {
           result.max += levelUp;
