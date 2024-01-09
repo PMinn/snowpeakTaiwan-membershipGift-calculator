@@ -49,6 +49,8 @@ export default function Home() {
     }
   ]
 
+  const numberComma = num => num.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ',');
+
   function priceToPoint(level, price) {
     return Math.round(price * cards[level].rewards);
   }
@@ -63,6 +65,7 @@ export default function Home() {
     const levelUpInput = document.getElementById('levelUp');
     const pointsInput = document.getElementById('points');
     const giftPointsInput = document.getElementById('giftPoints');
+    if (!levelUpInput.value || !pointsInput.value || !giftPointsInput.value) return;
     var hadLevelUp = false; // 有沒有升等過
     var levelUp = parseInt(levelUpInput.value); // 升等的金額
     var level = parseInt(cardLevel.replace('cards_', '')); // 目前等級
@@ -90,12 +93,13 @@ export default function Home() {
           steps.push({
             action: (
               <>
-                <img src={cards[i].image} className="me-5 w-[50px]" />
-                消費 [ {cards[i].name} {cards[i].rewards*100}% ]
+                <img src={cards[i].image} className="mt-1 w-[50px]" />
+                {cards[i].name} ({Math.floor(cards[i].rewards * 100)}%)
               </>
             ),
             price: levelUp,
-            totalPrice: (result.min == result.max ? result.min : `${result.min} ~ ${result.max}`),
+            // totalPrice: (result.min == result.max ? result.min : `${result.min}~${result.max}`),
+            totalPrice: result.max,
             points: levelUpPoints,
             totalPoints: result.points,
           });
@@ -105,12 +109,13 @@ export default function Home() {
           steps.push({
             action: (
               <>
-                <img src={cards[i].image} className="me-5 w-[50px]" />
-                消費 [ {cards[i].name} {cards[i].rewards*100}% ]
+                <img src={cards[i].image} className="mt-1 w-[50px]" />
+                {cards[i].name} ({Math.floor(cards[i].rewards * 100)}%)
               </>
             ),
             price: cards[i].levelUp,
-            totalPrice: (result.min == result.max ? result.min : `${result.min} ~ ${result.max}`),
+            // totalPrice: (result.min == result.max ? result.min : `${result.min}~${result.max}`),
+            totalPrice: result.max,
             points: levelUpPoints,
             totalPoints: result.points,
           });
@@ -125,19 +130,20 @@ export default function Home() {
         steps.push({
           action: (
             <>
-              <img src={cards[i].image} className="me-5 w-[50px]" />
-              消費 [ {cards[i].name} {cards[i].rewards*100}% ]
+              <img src={cards[i].image} className="mt-1 w-[50px]" />
+              {cards[i].name} ({Math.floor(cards[i].rewards * 100)}%)
             </>
           ),
-          price: `${tempPrice.min} ~ ${tempPrice.max}`,
-          totalPrice: (result.min == result.max ? result.min : `${result.min} ~ ${result.max}`),
+          // price: `${tempPrice.min}~${tempPrice.max}`,
+          price: tempPrice.max,
+          // totalPrice: (result.min == result.max ? result.min : `${result.min}~${result.max}`),
+          totalPrice: result.max,
           points: requirePoints,
           totalPoints: result.points,
         });
         break;
       }
     }
-    console.log(result, steps)
     setResultSteps(steps);
     onOpen();
   }
@@ -202,6 +208,7 @@ export default function Home() {
           id="levelUp"
           labelPlacement="outside"
           placeholder=" "
+          defaultValue="1000"
           min="1"
           step="1"
         />
@@ -220,6 +227,7 @@ export default function Home() {
           placeholder=" "
           min="1"
           step="1"
+          defaultValue="100"
         />
         <Input
           className="mb-5"
@@ -236,17 +244,19 @@ export default function Home() {
           placeholder=" "
           min="1"
           step="1"
+          defaultValue="3000"
         />
-        <div className="flex justify-between w-full">
+        <Button className="w-full block" color="primary" onClick={calculate}>計算</Button>
+        {/* <div className="flex justify-between w-full">
           <div className="w-[49%]">
             <Button className="w-full block" color="default" onClick={() => { }}>清除</Button>
           </div>
           <div className="w-[49%]">
             <Button className="w-full block" color="primary" onClick={calculate}>計算</Button>
           </div>
-        </div>
+        </div> */}
       </main >
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} className={theme} size="5xl" >
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} className={theme} size="5xl" backdrop="blur">
         <ModalContent>
           {(onClose) => (
             <>
@@ -254,22 +264,24 @@ export default function Home() {
               <ModalBody>
                 <Table aria-label="Example static collection table">
                   <TableHeader>
-                    <TableColumn> </TableColumn>
-                    <TableColumn>消費金額</TableColumn>
-                    <TableColumn>累積金額</TableColumn>
+                    <TableColumn></TableColumn>
+                    <TableColumn></TableColumn>
                     <TableColumn>新增點數</TableColumn>
                     <TableColumn>累積點數</TableColumn>
+                    <TableColumn>消費金額</TableColumn>
+                    <TableColumn>累積金額</TableColumn>
                   </TableHeader>
                   <TableBody>
                     {
                       resultSteps &&
                       resultSteps.map((step, index) => (
                         <TableRow key={'step_' + index}>
-                          <TableCell className="flex items-center">{step.action}</TableCell>
-                          <TableCell>{step.price}</TableCell>
-                          <TableCell>{step.totalPrice}</TableCell>
-                          <TableCell>{step.points}</TableCell>
-                          <TableCell>{step.totalPoints}</TableCell>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="flex flex-col items-center justify-center min-w-[100px]">{step.action}</TableCell>
+                          <TableCell className="text-center">{numberComma(step.points)}</TableCell>
+                          <TableCell className="text-center">{numberComma(step.totalPoints)}</TableCell>
+                          <TableCell className="text-center">{numberComma(step.price)}</TableCell>
+                          <TableCell className={"text-center " + (index == resultSteps.length - 1 ? "text-danger text-xl font-black" : "")}>{numberComma(step.totalPrice)}</TableCell>
                         </TableRow>
                       ))
                     }
@@ -277,8 +289,7 @@ export default function Home() {
                 </Table>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>Close</Button>
-                <Button color="primary" onPress={onClose}>Action</Button>
+                <Button color="primary" onPress={onClose}>關閉</Button>
               </ModalFooter>
             </>
           )}
